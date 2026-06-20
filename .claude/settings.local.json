@@ -1,0 +1,52 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find /home/yash/spring-demo -type f \\\\\\( -name \"*.java\" -o -name \"*.yml\" -o -name \"*.yaml\" -o -name \"*.properties\" -o -name \"build.gradle\" -o -name \"settings.gradle\" -o -name \"pom.xml\" -o -name \"*.sql\" \\\\\\) | sort)",
+      "Read(//home/yash/spring-demo/**)",
+      "Bash(xargs ls -la)",
+      "Bash(mysql -u root -proot123 -e \"SHOW DATABASES;\")",
+      "Bash(mysql -u root -proot123 lms -e \"SHOW TABLES;\")",
+      "Bash(mysql -u root -proot123 lms -e \"SHOW CREATE TABLE users\\\\G\")",
+      "Bash(mysql -u root -proot123 lms -e \"SHOW CREATE TABLE user_roles\\\\G; SHOW CREATE TABLE company_briefings\\\\G; SHOW CREATE TABLE lesson_topic\\\\G; SHOW CREATE TABLE lesson_complete\\\\G;\")",
+      "Bash(./node_modules/.bin/tailwindcss init *)",
+      "Bash(cat > *)",
+      "Skill(artifact-design)",
+      "Skill(artifact-design:*)",
+      "Bash(cp -r /home/yash/spring-demo/src/main/java/com/school /home/yash/spring-demo/app/src/main/java/com/)",
+      "Bash(cp -r /home/yash/spring-demo/src/main/resources/* /home/yash/spring-demo/app/src/main/resources/)",
+      "Bash(./gradlew :app:compileJava)",
+      "Bash(./gradlew :app:bootJar)",
+      "Bash(npm run *)",
+      "Bash(./gradlew :app:bootRun)",
+      "Bash(echo \"PID: $!\")",
+      "Bash(curl -s http://localhost:9090/actuator/health)",
+      "Read(//tmp/**)",
+      "Bash(./gradlew :app:bootRun --no-daemon)",
+      "Bash(echo \"Started PID $!\")",
+      "Bash(python3 -m json.tool)",
+      "Bash(echo \"\")",
+      "Bash(echo \"management.health.mail.enabled=false\")",
+      "Bash(curl -s -X POST http://localhost:9090/api/auth/login -H 'Content-Type: application/json' -d '{\"email\":\"admin@school.com\",\"password\":\"admin123\"}')",
+      "Bash(mysql -u root -proot123 lms -e \"SELECT email, status, password FROM users LIMIT 5;\")",
+      "Bash(mysql -u root -proot123 lms -e \"SELECT u.email, u.status, r.role FROM users u JOIN user_roles r ON r.user_id = u.id WHERE r.role LIKE '%admin%' LIMIT 5;\")",
+      "Bash(node -e ' *)",
+      "Bash(htpasswd -nbBC 10 \"\" \"admin123\")",
+      "Bash(cat)",
+      "Bash(groovy /tmp/BcryptGen.groovy)",
+      "Bash(curl -s -X POST http://localhost:9090/api/auth/login -H 'Content-Type: application/json' -d '{\"email\":\"3428+myadmin.work@intelling.co.uk\",\"password\":\"intelling123\"}')",
+      "Bash(pip3 install *)",
+      "Bash(python3 -c \"from passlib.hash import bcrypt; print\\(bcrypt.using\\(rounds=10\\).hash\\('admin123'\\)\\)\")",
+      "Bash(./gradlew :app:generateHash)",
+      "Bash(grep '^\\\\$2')",
+      "Bash(mysql -u root -proot123 lms -e ' *)",
+      "Bash(mysql -u root -proot123 lms -e \"SHOW TRIGGERS\\\\G\")",
+      "Bash(mysql -u root -proot123 lms -e \"SELECT id, email FROM users WHERE id = 9999;\")",
+      "Bash(mysql -u root -proot123 lms -e \"DELETE FROM users WHERE id = 9999; DELETE FROM user_roles WHERE user_id = 9999;\")"
+    ],
+    "additionalDirectories": [
+      "/home/yash/spring-demo/src/main/java/com/school/identity/dto",
+      "/home/yash/spring-demo/src/main/java/com/school/timetable/controller",
+      "/home/yash/spring-demo/src/main/java/com/school/exams/dto"
+    ]
+  }
+}
