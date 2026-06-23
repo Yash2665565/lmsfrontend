@@ -60,13 +60,17 @@ export default function LessonsPage() {
               onChange={e => setSearch(e.target.value)}
               className="input pl-9"
             />
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">🔍</span>
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" style={{ display: 'flex' }}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+            </span>
           </div>
 
           {lessonsLoading ? <Spinner /> : (
             lessons.length === 0 ? (
               <div className="card flex flex-col items-center justify-center py-20 text-center">
-                <span className="text-5xl mb-4">📚</span>
+                <span className="mb-4 flex items-center justify-center" style={{ width: 46, height: 46, borderRadius: 12, background: 'var(--canvas-sunk)', color: 'var(--faint)' }}>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+                </span>
                 <p className="text-slate-600 font-medium">No lessons found</p>
                 <p className="text-slate-400 text-sm mt-1">
                   {search ? 'Try a different search term' : 'No lessons have been added yet'}

@@ -86,7 +86,7 @@ function PostNoticeForm({ onSubmit, isPending }) {
           {...register('content', { required: 'Content is required' })}
         />
       </Field>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Field label="Target" error={errors.targetType?.message}>
           <select className="input" {...register('targetType')}>
             <option value="SCHOOL">School-wide</option>

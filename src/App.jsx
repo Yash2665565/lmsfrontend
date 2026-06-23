@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import ProtectedRoute from './auth/ProtectedRoute'
 import Layout from './components/layout/Layout'
 import LoginPage from './pages/LoginPage'
+import PortalPage from './pages/PortalPage'
 import UnauthorizedPage from './pages/UnauthorizedPage'
 import AdminDashboard from './pages/AdminDashboard'
 import TeacherDashboard from './pages/TeacherDashboard'
@@ -19,6 +20,11 @@ import MarksEntryPage from './features/marks/MarksEntryPage'
 import NoticesPage from './features/notices/NoticesPage'
 import TimetablePage from './features/timetable/TimetablePage'
 import LessonsPage from './features/content/LessonsPage'
+import LmsDashboard from './lms/LmsDashboard'
+import LmsCoursesPage from './lms/LmsCoursesPage'
+import LmsCourseDetail from './lms/LmsCourseDetail'
+import LmsUnitDetail from './lms/LmsUnitDetail'
+import LmsLayout from './components/layout/LmsLayout'
 
 const ADMIN = ['ADMIN','SUPER_ADMIN']
 const TEACHER = ['CLASS_TEACHER','SUBJECT_TEACHER']
@@ -57,6 +63,11 @@ export default function App() {
       <Route path="/student/marks" element={<ProtectedRoute roles={['STUDENT']}><Layout><ReportCardPage /></Layout></ProtectedRoute>} />
       <Route path="/student/lessons" element={<ProtectedRoute roles={['STUDENT']}><Layout><LessonsPage /></Layout></ProtectedRoute>} />
       <Route path="/student/notices" element={<ProtectedRoute roles={['STUDENT']}><Layout><NoticesPage /></Layout></ProtectedRoute>} />
+      {/* LMS routes — use LmsLayout (top navbar, no sidebar) */}
+      <Route path="/student/lms" element={<ProtectedRoute roles={['STUDENT','CLASS_TEACHER','SUBJECT_TEACHER','ADMIN','SUPER_ADMIN']}><LmsLayout><LmsDashboard /></LmsLayout></ProtectedRoute>} />
+      <Route path="/student/lms/courses" element={<ProtectedRoute roles={['STUDENT','CLASS_TEACHER','SUBJECT_TEACHER','ADMIN','SUPER_ADMIN']}><LmsLayout><LmsCoursesPage /></LmsLayout></ProtectedRoute>} />
+      <Route path="/student/lms/courses/:subjectId" element={<ProtectedRoute roles={['STUDENT','CLASS_TEACHER','SUBJECT_TEACHER','ADMIN','SUPER_ADMIN']}><LmsLayout><LmsCourseDetail /></LmsLayout></ProtectedRoute>} />
+      <Route path="/student/lms/courses/:subjectId/units/:unitId" element={<ProtectedRoute roles={['STUDENT','CLASS_TEACHER','SUBJECT_TEACHER','ADMIN','SUPER_ADMIN']}><LmsLayout><LmsUnitDetail /></LmsLayout></ProtectedRoute>} />
 
       {/* Parent routes */}
       <Route path="/parent" element={<ProtectedRoute roles={['PARENT']}><Layout><ParentDashboard /></Layout></ProtectedRoute>} />
@@ -64,7 +75,7 @@ export default function App() {
       <Route path="/parent/attendance" element={<ProtectedRoute roles={['PARENT']}><Layout><AttendanceReport /></Layout></ProtectedRoute>} />
       <Route path="/parent/notices" element={<ProtectedRoute roles={['PARENT']}><Layout><NoticesPage /></Layout></ProtectedRoute>} />
 
-      <Route path="/" element={<Navigate to="/login" replace />} />
+      <Route path="/" element={<PortalPage />} />
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   )

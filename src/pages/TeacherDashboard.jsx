@@ -2,37 +2,29 @@ import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import api from '../app/axios'
 import StatCard from '../components/ui/StatCard'
-import PageHeader from '../components/ui/PageHeader'
 import Spinner from '../components/ui/Spinner'
 import { useAuth } from '../auth/AuthContext'
+import {
+  IconClipboard, IconEdit, IconCalendar, IconChart, IconNotice, IconBuilding,
+} from '../components/ui/Icons'
+
+const GRID_CSS = `
+  .tr-stats-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:18px; }
+  .tr-two-col    { display:grid; grid-template-columns:1fr 1fr;       gap:22px; }
+  @media(max-width:900px){
+    .tr-stats-grid { grid-template-columns:repeat(2,1fr) !important; }
+    .tr-two-col    { grid-template-columns:1fr !important; }
+  }
+  @media(max-width:480px){ .tr-stats-grid { grid-template-columns:1fr !important; } }
+  .tr-action-tile:hover { box-shadow:0 4px 14px rgba(64,52,28,0.10) !important; transform:translateY(-1px); border-color:#d6cab2 !important; }
+`
 
 const QUICK_ACTIONS = [
-  { to: '/teacher/attendance', icon: '✅', label: 'Mark Attendance', desc: 'Record today\'s register', color: 'green' },
-  { to: '/teacher/marks', icon: '📝', label: 'Enter Marks', desc: 'Post exam scores', color: 'indigo' },
-  { to: '/teacher/timetable', icon: '🗓️', label: 'View Timetable', desc: 'Your weekly schedule', color: 'blue' },
-  { to: '/teacher/reports', icon: '📊', label: 'Attendance Reports', desc: 'Analytics & summaries', color: 'amber' },
+  { to: '/teacher/attendance', Icon: IconClipboard, label: 'Mark Attendance',  desc: "Record today's register" },
+  { to: '/teacher/marks',      Icon: IconEdit,      label: 'Enter Marks',      desc: 'Post exam scores' },
+  { to: '/teacher/timetable',  Icon: IconCalendar,  label: 'View Timetable',   desc: 'Your weekly schedule' },
+  { to: '/teacher/reports',    Icon: IconChart,     label: 'Attendance Report',desc: 'Analytics & summaries' },
 ]
-
-function NoticeItem({ notice }) {
-  const title = notice.name ?? notice.title ?? 'Untitled'
-  const mandatory = notice.mandatory === 1 || notice.mandatory === true
-  const date = notice.createdAt
-    ? new Date(notice.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
-    : notice.date ?? ''
-
-  return (
-    <div className="flex items-start gap-3 py-3 border-b border-slate-50 last:border-0">
-      <div className="flex-shrink-0 w-1.5 h-1.5 rounded-full bg-indigo-400 mt-2" />
-      <div className="min-w-0 flex-1">
-        <div className="flex items-start justify-between gap-2">
-          <p className="text-sm font-medium text-slate-800 leading-snug">{title}</p>
-          {mandatory && <span className="badge badge-red flex-shrink-0">Required</span>}
-        </div>
-        {date && <p className="text-xs text-slate-400 mt-0.5">{date}</p>}
-      </div>
-    </div>
-  )
-}
 
 function getGreeting() {
   const h = new Date().getHours()
@@ -45,116 +37,83 @@ export default function TeacherDashboard() {
   const { user } = useAuth()
 
   const today = new Date()
-  const todayFormatted = today.toLocaleDateString('en-IN', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  })
+  const todayLabel = today.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+  const todayShort = today.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
 
   const { data: sectionsData, isLoading: sectionsLoading } = useQuery({
     queryKey: ['teacher-sections'],
     queryFn: () => api.get('/sections').then(r => r.data.data),
   })
-
   const { data: notices, isLoading: noticesLoading } = useQuery({
     queryKey: ['teacher-notices-recent'],
     queryFn: () => api.get('/notices').then(r => r.data.data),
   })
 
-  const sections = Array.isArray(sectionsData) ? sectionsData : []
-  const recentNotices = Array.isArray(notices) ? notices.slice(0, 3) : []
-  const noticeCount = Array.isArray(notices) ? notices.length : null
+  const sections      = Array.isArray(sectionsData) ? sectionsData : []
+  const recentNotices = Array.isArray(notices) ? notices.slice(0, 4) : []
+  const noticeCount   = Array.isArray(notices) ? notices.length : null
 
-  if (sectionsLoading) {
-    return (
-      <div className="page">
-        <Spinner />
-      </div>
-    )
-  }
+  if (sectionsLoading) return <div className="page"><Spinner /></div>
 
   return (
     <div className="page">
-      <PageHeader
-        title={`${getGreeting()}, ${user?.name?.split(' ')[0] ?? 'Teacher'}`}
-        subtitle={todayFormatted}
-      />
+      <style>{GRID_CSS}</style>
 
-      {/* Stat cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-        <StatCard
-          label="My Sections"
-          value={sections.length}
-          icon="🏫"
-          color="indigo"
-          sub="assigned to you"
-        />
-        <StatCard
-          label="Today"
-          value={today.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
-          icon="📅"
-          color="blue"
-          sub={today.toLocaleDateString('en-IN', { weekday: 'long' })}
-        />
-        <StatCard
-          label="Notices"
-          value={noticesLoading ? null : noticeCount}
-          icon="📢"
-          color="amber"
-          sub="school announcements"
-        />
+      {/* Greeting */}
+      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 26, flexWrap: 'wrap', gap: 10 }}>
+        <div>
+          <p className="eyebrow" style={{ margin: '0 0 7px' }}>{getGreeting()}</p>
+          <h1 className="display" style={{ fontSize: 30, margin: 0 }}>{user?.name ?? 'Teacher'}</h1>
+        </div>
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '7px 14px', background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 8 }}>
+          <IconCalendar size={13} color="var(--muted)" />
+          <span style={{ fontSize: 12.5, color: 'var(--muted)', fontWeight: 500 }}>{todayLabel}</span>
+        </div>
       </div>
 
-      {/* Two column */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Quick Actions */}
-        <div className="card p-5">
-          <h2 className="text-base font-semibold text-slate-800 mb-4">Quick Actions</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {QUICK_ACTIONS.map(action => (
-              <Link
-                key={action.to}
-                to={action.to}
-                className="group flex items-start gap-3 p-3.5 rounded-xl border border-slate-100 hover:border-indigo-200 hover:bg-indigo-50 transition-all"
-              >
-                <span
-                  className={`flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center text-lg ${
-                    action.color === 'green'  ? 'bg-green-50' :
-                    action.color === 'blue'   ? 'bg-blue-50'  :
-                    action.color === 'amber'  ? 'bg-amber-50' : 'bg-indigo-50'
-                  }`}
-                >
-                  {action.icon}
-                </span>
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold text-slate-800 group-hover:text-indigo-700 transition-colors">
-                    {action.label}
-                  </p>
-                  <p className="text-xs text-slate-400 mt-0.5">{action.desc}</p>
+      {/* Stat cards */}
+      <div className="tr-stats-grid" style={{ marginBottom: 26 }}>
+        <StatCard label="My Sections" value={sections.length} Icon={IconBuilding} color="green" sub="assigned to you" />
+        <StatCard label="Today"        value={todayShort}      Icon={IconCalendar} color="teal"  sub={today.toLocaleDateString('en-IN', { weekday: 'long' })} />
+        <StatCard label="Notices"      value={noticesLoading ? null : noticeCount} Icon={IconNotice} color="brass" sub="school announcements" />
+      </div>
+
+      {/* Two-column */}
+      <div className="tr-two-col">
+
+        {/* Quick Actions + Sections */}
+        <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 13, boxShadow: 'var(--shadow-sm)', overflow: 'hidden' }}>
+          <div style={{ padding: '16px 22px', borderBottom: '1px solid var(--line-2)' }}>
+            <h2 className="card-title">Quick Actions</h2>
+          </div>
+          <div style={{ padding: '16px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            {QUICK_ACTIONS.map(a => (
+              <Link key={a.to} to={a.to} className="tr-action-tile" style={{
+                display: 'flex', alignItems: 'center', gap: 12, padding: '12px 13px',
+                background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 10,
+                boxShadow: 'var(--shadow-xs)', transition: 'box-shadow 0.15s, transform 0.15s, border-color 0.15s', textDecoration: 'none',
+              }}>
+                <div className="icon-chip" style={{ width: 35, height: 35 }}>
+                  <a.Icon size={16} />
+                </div>
+                <div style={{ minWidth: 0 }}>
+                  <p style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--ink)', margin: 0, lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.label}</p>
+                  <p style={{ fontSize: 11.5, color: 'var(--faint)', margin: '2px 0 0', lineHeight: 1.3 }}>{a.desc}</p>
                 </div>
               </Link>
             ))}
           </div>
 
-          {/* Sections list */}
           {sections.length > 0 && (
-            <div className="mt-5 pt-4 border-t border-slate-100">
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">
-                Assigned Sections
-              </p>
-              <div className="space-y-2">
+            <div style={{ borderTop: '1px solid var(--line-2)', padding: '14px 16px 16px' }}>
+              <p className="section-title" style={{ marginBottom: 11 }}>Assigned Sections</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {sections.map(section => (
-                  <div
-                    key={section.id}
-                    className="flex items-center justify-between px-3 py-2 rounded-lg bg-slate-50"
-                  >
-                    <p className="text-sm font-medium text-slate-800">
+                  <div key={section.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', background: 'var(--surface-2)', border: '1px solid var(--line-2)', borderRadius: 8 }}>
+                    <p style={{ fontSize: 13, fontWeight: 500, color: 'var(--ink)', margin: 0 }}>
                       {section.classGrade?.name ?? section.className ?? 'Class'} — {section.name}
                     </p>
-                    <span className="badge badge-blue">
-                      {section.studentCount ?? '—'} students
-                    </span>
+                    <span className="badge badge-green">{section.studentCount ?? '—'} students</span>
                   </div>
                 ))}
               </div>
@@ -163,28 +122,32 @@ export default function TeacherDashboard() {
         </div>
 
         {/* Recent Notices */}
-        <div className="card p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-base font-semibold text-slate-800">Recent Notices</h2>
-            <Link
-              to="/teacher/notices"
-              className="text-xs text-indigo-600 hover:text-indigo-700 font-medium"
-            >
-              View all →
-            </Link>
+        <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 13, boxShadow: 'var(--shadow-sm)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ padding: '16px 22px', borderBottom: '1px solid var(--line-2)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <h2 className="card-title">Recent Notices</h2>
+            <Link to="/teacher/notices" style={{ fontSize: 12.5, color: 'var(--accent)', textDecoration: 'none', fontWeight: 500 }}>View all</Link>
           </div>
-
-          {noticesLoading ? (
-            <Spinner />
-          ) : recentNotices.length === 0 ? (
-            <p className="text-sm text-slate-400 py-8 text-center">No notices yet.</p>
-          ) : (
-            <div>
-              {recentNotices.map(notice => (
-                <NoticeItem key={notice.id} notice={notice} />
-              ))}
-            </div>
-          )}
+          <div style={{ flex: 1, padding: '4px 22px 10px' }}>
+            {noticesLoading ? <Spinner /> : recentNotices.length === 0 ? (
+              <p style={{ fontSize: 13, color: 'var(--faint)', textAlign: 'center', padding: '34px 0' }}>No notices yet</p>
+            ) : recentNotices.map(n => {
+              const title     = n.name ?? n.title ?? 'Untitled'
+              const mandatory = n.mandatory === 1 || n.mandatory === true
+              const date      = n.createdAt ? new Date(n.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : ''
+              return (
+                <div key={n.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 11, padding: '11px 0', borderBottom: '1px solid var(--line-2)' }}>
+                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: mandatory ? 'var(--danger)' : 'var(--brass)', flexShrink: 0, marginTop: 6 }} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                      <p style={{ fontSize: 13, fontWeight: 500, color: 'var(--ink)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{title}</p>
+                      {mandatory && <span className="badge badge-red" style={{ flexShrink: 0 }}>Required</span>}
+                    </div>
+                    {date && <p style={{ fontSize: 11.5, color: 'var(--faint)', margin: '2px 0 0' }}>{date}</p>}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
         </div>
       </div>
     </div>

@@ -1,57 +1,69 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
-import api from '../app/axios'
-import StatCard from '../components/ui/StatCard'
-import PageHeader from '../components/ui/PageHeader'
-import Spinner from '../components/ui/Spinner'
 import { useAuth } from '../auth/AuthContext'
+import api from '../app/axios'
+import Spinner from '../components/ui/Spinner'
+import {
+  IconClipboard, IconChart, IconCalendar, IconNotice,
+  IconBookOpen, IconChevronR,
+} from '../components/ui/Icons'
+
+const GRID_CSS = `
+  .std-quick-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:14px; }
+  .std-main-grid  { display:grid; grid-template-columns:1fr 1fr 1fr;   gap:22px; }
+  @media(max-width:1024px){ .std-main-grid { grid-template-columns:1fr 1fr !important; } }
+  @media(max-width:720px) {
+    .std-quick-grid { grid-template-columns:repeat(3,1fr) !important; }
+    .std-main-grid  { grid-template-columns:1fr !important; }
+  }
+  @media(max-width:480px) { .std-quick-grid { grid-template-columns:repeat(2,1fr) !important; } }
+  .std-qa-tile:hover { box-shadow:0 4px 14px rgba(64,52,28,0.10) !important; transform:translateY(-1px); border-color:#d6cab2 !important; }
+  .std-course-row:hover .std-course-label { color:var(--accent) !important; }
+`
+
+const QUICK_LINKS = [
+  { Icon: IconBookOpen,  label: 'LMS',         to: '/student/lms' },
+  { Icon: IconClipboard, label: 'Attendance',  to: '/student/attendance' },
+  { Icon: IconChart,     label: 'Report Card', to: '/student/marks' },
+  { Icon: IconCalendar,  label: 'Timetable',   to: '/student/timetable' },
+  { Icon: IconNotice,    label: 'Notices',     to: '/student/notices' },
+]
+
+function AttendancePill({ pct }) {
+  const p = Number(pct ?? 0)
+  const isGood = p >= 75
+  const isWarn = p >= 60 && p < 75
+  return (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', gap: 4,
+      padding: '2px 9px', borderRadius: 5, fontSize: 12, fontWeight: 600,
+      background: isGood ? 'var(--success-tint)' : isWarn ? 'var(--brass-tint)' : 'var(--danger-tint)',
+      color: isGood ? 'var(--success)' : isWarn ? '#8a5e2a' : 'var(--danger)',
+      border: `1px solid ${isGood ? 'var(--success-line)' : isWarn ? 'var(--brass-line)' : 'var(--danger-line)'}`,
+    }}>
+      {p.toFixed(1)}%
+    </span>
+  )
+}
 
 function AttendanceBar({ pct }) {
-  const color =
-    pct >= 75 ? { bar: '#10b981', label: 'text-emerald-600', bg: 'bg-emerald-50' } :
-    pct >= 60 ? { bar: '#f59e0b', label: 'text-amber-600', bg: 'bg-amber-50' } :
-                { bar: '#ef4444', label: 'text-red-600', bg: 'bg-red-50' }
-
+  const p = Math.min(Number(pct ?? 0), 100)
+  const barColor = p >= 75 ? 'var(--success)' : p >= 60 ? 'var(--brass)' : 'var(--danger)'
   return (
-    <div>
-      <div className="flex items-center justify-between mb-1.5">
-        <span className="text-sm text-slate-600">Overall attendance</span>
-        <span className={`text-sm font-bold ${color.label}`}>{pct}%</span>
-      </div>
-      <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden">
-        <div
-          className="h-full rounded-full transition-all duration-500"
-          style={{ width: `${Math.min(pct, 100)}%`, background: color.bar }}
-        />
-      </div>
-      <p className={`text-xs mt-2 font-medium ${color.label}`}>
-        {pct >= 75
-          ? 'Attendance is in good standing.'
-          : pct >= 60
-          ? 'Attendance is below the 75% threshold — act now.'
-          : 'Critical: attendance is very low. Contact your class teacher.'}
-      </p>
+    <div style={{ height: 7, borderRadius: 4, background: 'var(--canvas-sunk)', overflow: 'hidden' }}>
+      <div style={{ height: '100%', width: `${p}%`, background: barColor, borderRadius: 4, transition: 'width 0.4s' }} />
     </div>
   )
 }
 
-function NoticeItem({ notice }) {
-  const title = notice.name ?? notice.title ?? 'Untitled'
-  const mandatory = notice.mandatory === 1 || notice.mandatory === true
-  const date = notice.createdAt
-    ? new Date(notice.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
-    : notice.date ?? ''
-
+function CardShell({ title, link, linkTo, children }) {
   return (
-    <div className="flex items-start gap-3 py-3 border-b border-slate-50 last:border-0">
-      <div className="flex-shrink-0 w-1.5 h-1.5 rounded-full bg-indigo-400 mt-2" />
-      <div className="min-w-0 flex-1">
-        <div className="flex items-start justify-between gap-2">
-          <p className="text-sm font-medium text-slate-800 leading-snug">{title}</p>
-          {mandatory && <span className="badge badge-red flex-shrink-0">Required</span>}
-        </div>
-        {date && <p className="text-xs text-slate-400 mt-0.5">{date}</p>}
+    <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 13, boxShadow: 'var(--shadow-sm)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ padding: '15px 20px', borderBottom: '1px solid var(--line-2)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <h2 className="card-title" style={{ fontSize: 15 }}>{title}</h2>
+        {link && <Link to={linkTo} style={{ fontSize: 12.5, color: 'var(--accent)', textDecoration: 'none', fontWeight: 500 }}>{link}</Link>}
       </div>
+      {children}
     </div>
   )
 }
@@ -59,169 +71,170 @@ function NoticeItem({ notice }) {
 export default function StudentDashboard() {
   const { user } = useAuth()
 
-  // Get current user profile to find student ID
-  const { data: meData, isLoading: meLoading } = useQuery({
-    queryKey: ['student-me'],
-    queryFn: () => api.get('/me').then(r => r.data.data),
+  const { data: attendanceData, isLoading: attLoading } = useQuery({
+    queryKey: ['student-attendance', user?.studentId],
+    queryFn: () => api.get(`/students/${user?.studentId}/attendance-summary`).then(r => r.data.data ?? []),
+    enabled: !!user?.studentId,
+  })
+  const summaries = Array.isArray(attendanceData) ? attendanceData : []
+  const latestSummary = summaries[summaries.length - 1] ?? null
+
+  const { data: subjects = [] } = useQuery({
+    queryKey: ['lms-subjects'],
+    queryFn: () => api.get('/subjects').then(r => r.data.data ?? []),
   })
 
-  const studentId = meData?.studentId ?? meData?.id ?? user?.studentId ?? null
-
-  const { data: attendanceSummaryData, isLoading: attendanceLoading } = useQuery({
-    queryKey: ['student-attendance-summary', studentId],
-    queryFn: () =>
-      api.get(`/students/${studentId}/attendance-summary`).then(r => r.data.data),
-    enabled: !!studentId,
-  })
-
-  const { data: notices, isLoading: noticesLoading } = useQuery({
+  const { data: notices = [] } = useQuery({
     queryKey: ['student-notices'],
-    queryFn: () => api.get('/notices').then(r => r.data.data),
+    queryFn: () => api.get('/notices').then(r => r.data.data ?? []),
   })
+  const recentNotices = notices.slice(0, 4)
 
-  // Resolve summary — may be array of terms or single object
-  const summary = Array.isArray(attendanceSummaryData)
-    ? attendanceSummaryData[attendanceSummaryData.length - 1] // latest term
-    : attendanceSummaryData
-
-  const presentDays  = summary?.presentDays  ?? summary?.present  ?? null
-  const absentDays   = summary?.absentDays   ?? summary?.absent   ?? null
-  const totalDays    = summary?.totalDays    ?? summary?.total    ?? null
-  const attendancePct =
-    summary?.attendancePercentage ??
-    summary?.percentage ??
-    (presentDays !== null && totalDays ? Math.round((presentDays / totalDays) * 100) : null)
-
-  const recentNotices = Array.isArray(notices) ? notices.slice(0, 3) : []
-  const noticeCount   = Array.isArray(notices) ? notices.length : null
-
-  const todayFormatted = new Date().toLocaleDateString('en-IN', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  })
-
-  if (meLoading) {
-    return (
-      <div className="page">
-        <Spinner />
-      </div>
-    )
-  }
+  const hour = new Date().getHours()
+  const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'
+  const todayLabel = new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
 
   return (
     <div className="page">
-      <PageHeader
-        title="My Dashboard"
-        subtitle={`${user?.name ?? 'Student'} — ${todayFormatted}`}
-      />
+      <style>{GRID_CSS}</style>
 
-      {/* Stat cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <StatCard
-          label="Attendance"
-          value={attendanceLoading ? null : (attendancePct !== null ? `${attendancePct}%` : '—')}
-          icon="📊"
-          color={
-            attendancePct === null ? 'indigo' :
-            attendancePct >= 75 ? 'green' :
-            attendancePct >= 60 ? 'amber' : 'red'
-          }
-          sub="this term"
-        />
-        <StatCard
-          label="Present Days"
-          value={attendanceLoading ? null : (presentDays ?? '—')}
-          icon="✅"
-          color="green"
-        />
-        <StatCard
-          label="Absent Days"
-          value={attendanceLoading ? null : (absentDays ?? '—')}
-          icon="❌"
-          color="red"
-        />
-        <StatCard
-          label="Notices"
-          value={noticesLoading ? null : noticeCount}
-          icon="📢"
-          color="amber"
-          sub="school-wide"
-        />
+      {/* Greeting */}
+      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 26, flexWrap: 'wrap', gap: 10 }}>
+        <div>
+          <p className="eyebrow" style={{ margin: '0 0 7px' }}>{greeting}</p>
+          <h1 className="display" style={{ fontSize: 30, margin: 0 }}>{user?.name ?? 'Student'}</h1>
+        </div>
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '7px 14px', background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 8 }}>
+          <IconCalendar size={13} color="var(--muted)" />
+          <span style={{ fontSize: 12.5, color: 'var(--muted)', fontWeight: 500 }}>{todayLabel}</span>
+        </div>
       </div>
 
-      {/* Two column */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Attendance overview */}
-        <div className="card p-5">
-          <div className="flex items-center justify-between mb-5">
-            <h2 className="text-base font-semibold text-slate-800">Attendance Overview</h2>
-            <Link
-              to="/student/attendance"
-              className="text-xs text-indigo-600 hover:text-indigo-700 font-medium"
-            >
-              Full report →
-            </Link>
-          </div>
-
-          {attendanceLoading ? (
-            <Spinner />
-          ) : attendancePct === null ? (
-            <div className="py-6 text-center">
-              <p className="text-sm text-slate-400">No attendance data available yet.</p>
+      {/* Quick links */}
+      <div className="std-quick-grid" style={{ marginBottom: 26 }}>
+        {QUICK_LINKS.map(lk => (
+          <Link
+            key={lk.label}
+            to={lk.to}
+            className="std-qa-tile"
+            style={{
+              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 9, padding: '16px 10px',
+              background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 11,
+              boxShadow: 'var(--shadow-xs)',
+              transition: 'box-shadow 0.15s, transform 0.15s, border-color 0.15s', textDecoration: 'none',
+            }}
+          >
+            <div className="icon-chip" style={{ width: 40, height: 40, borderRadius: 10 }}>
+              <lk.Icon size={18} />
             </div>
-          ) : (
-            <div className="space-y-5">
-              <AttendanceBar pct={attendancePct} />
+            <span style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--ink)', textAlign: 'center', lineHeight: 1.3 }}>{lk.label}</span>
+          </Link>
+        ))}
+      </div>
 
-              <div className="grid grid-cols-3 gap-3 pt-2">
-                {[
-                  { label: 'Present', value: presentDays, color: 'bg-emerald-50 text-emerald-700' },
-                  { label: 'Absent',  value: absentDays,  color: 'bg-red-50 text-red-700' },
-                  { label: 'Total',   value: totalDays,   color: 'bg-slate-50 text-slate-700' },
-                ].map(stat => (
-                  <div key={stat.label} className={`rounded-lg p-3 text-center ${stat.color}`}>
-                    <p className="text-xl font-bold">{stat.value ?? '—'}</p>
-                    <p className="text-xs font-medium mt-0.5">{stat.label}</p>
-                  </div>
-                ))}
+      {/* 3-column */}
+      <div className="std-main-grid" style={{ marginBottom: 26 }}>
+
+        {/* Announcements */}
+        <CardShell title="Announcements" link="View all" linkTo="/student/notices">
+          <div style={{ flex: 1 }}>
+            {recentNotices.length === 0 ? (
+              <p style={{ padding: '34px 20px', fontSize: 13, color: 'var(--faint)', textAlign: 'center' }}>No notices</p>
+            ) : recentNotices.map(n => (
+              <div key={n.id} style={{ padding: '11px 20px', borderBottom: '1px solid var(--line-2)', display: 'flex', alignItems: 'flex-start', gap: 11 }}>
+                <div style={{ width: 6, height: 6, borderRadius: '50%', background: n.mandatory ? 'var(--danger)' : 'var(--brass)', flexShrink: 0, marginTop: 6 }} />
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <p style={{ fontSize: 13, fontWeight: 500, color: 'var(--ink)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{n.name ?? n.title}</p>
+                  {n.createdAt && <p style={{ fontSize: 11.5, color: 'var(--faint)', margin: '2px 0 0' }}>{new Date(n.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</p>}
+                </div>
               </div>
-
-              {summary?.termName && (
-                <p className="text-xs text-slate-400 text-center">
-                  Term: {summary.termName}
-                </p>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Notices */}
-        <div className="card p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-base font-semibold text-slate-800">Notices</h2>
-            <Link
-              to="/student/notices"
-              className="text-xs text-indigo-600 hover:text-indigo-700 font-medium"
-            >
-              View all →
-            </Link>
+            ))}
           </div>
+        </CardShell>
 
-          {noticesLoading ? (
-            <Spinner />
-          ) : recentNotices.length === 0 ? (
-            <p className="text-sm text-slate-400 py-8 text-center">No notices yet.</p>
-          ) : (
-            <div>
-              {recentNotices.map(notice => (
-                <NoticeItem key={notice.id} notice={notice} />
-              ))}
-            </div>
-          )}
-        </div>
+        {/* My Courses */}
+        <CardShell title="My Courses" link="LMS" linkTo="/student/lms/courses">
+          <div style={{ padding: '8px 20px', flex: 1 }}>
+            {subjects.length === 0 ? (
+              <p style={{ fontSize: 13, color: 'var(--faint)', textAlign: 'center', padding: '26px 0' }}>No subjects enrolled</p>
+            ) : subjects.slice(0, 5).map(s => (
+              <Link key={s.id} to={`/student/lms/courses/${s.id}`} className="std-course-row" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: '1px solid var(--line-2)', textDecoration: 'none' }}>
+                <div style={{ width: 30, height: 30, borderRadius: 8, background: 'var(--accent-tint)', color: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Fraunces', Georgia, serif", fontSize: 13, fontWeight: 600, flexShrink: 0 }}>
+                  {(s.name || 'S')[0].toUpperCase()}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p className="std-course-label" style={{ fontSize: 13, fontWeight: 500, color: 'var(--ink)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', transition: 'color 0.15s' }}>{s.name}</p>
+                  {s.code && <p style={{ fontSize: 11.5, color: 'var(--faint)', margin: '1px 0 0' }}>{s.code}</p>}
+                </div>
+                <IconChevronR size={13} color="#c2bba9" />
+              </Link>
+            ))}
+          </div>
+        </CardShell>
+
+        {/* Attendance */}
+        <CardShell title="Attendance" link="Details" linkTo="/student/attendance">
+          <div style={{ padding: '18px 20px', flex: 1 }}>
+            {attLoading ? <Spinner /> : latestSummary ? (
+              <>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 9 }}>
+                  <span style={{ fontSize: 12.5, color: 'var(--muted)', fontWeight: 500 }}>Overall attendance</span>
+                  <AttendancePill pct={latestSummary.attendancePct} />
+                </div>
+                <AttendanceBar pct={latestSummary.attendancePct} />
+                <div style={{ display: 'flex', gap: 14, marginTop: 11, fontSize: 12 }}>
+                  <span style={{ color: 'var(--success)', fontWeight: 500 }}>{latestSummary.presentDays} Present</span>
+                  <span style={{ color: 'var(--danger)', fontWeight: 500 }}>{latestSummary.absentDays} Absent</span>
+                  <span style={{ color: 'var(--faint)' }}>of {latestSummary.totalDays} days</span>
+                </div>
+                <div style={{ marginTop: 14 }}>
+                  {summaries.slice(0, 3).map(s => (
+                    <div key={s.termId ?? s.term?.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '7px 0', borderBottom: '1px solid var(--line-2)', fontSize: 12 }}>
+                      <span style={{ color: 'var(--muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.term?.name ?? s.termName ?? `Term ${s.termId}`}</span>
+                      <AttendancePill pct={s.attendancePct} />
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <p style={{ fontSize: 13, color: 'var(--faint)', textAlign: 'center', padding: '26px 0' }}>No attendance data</p>
+            )}
+          </div>
+        </CardShell>
       </div>
+
+      {/* Subjects table */}
+      {subjects.length > 0 && (
+        <div className="table-container">
+          <div style={{ padding: '15px 20px', borderBottom: '1px solid var(--line)', background: 'var(--canvas-sunk)' }}>
+            <h2 className="card-title" style={{ fontSize: 15 }}>Course &amp; Attendance Overview</h2>
+          </div>
+          <div style={{ overflowX: 'auto' }}>
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th style={{ width: 44 }}>#</th>
+                  <th>Subject</th>
+                  <th>Code</th>
+                  <th>Attendance</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {subjects.map((s, i) => (
+                  <tr key={s.id}>
+                    <td style={{ color: 'var(--faint)', fontSize: 12 }}>{i + 1}</td>
+                    <td style={{ fontWeight: 500 }}>{s.name}</td>
+                    <td style={{ fontFamily: 'monospace', fontSize: 12, color: 'var(--muted)' }}>{s.code ?? '—'}</td>
+                    <td>{latestSummary ? <AttendancePill pct={latestSummary.attendancePct} /> : <span style={{ color: 'var(--disabled)' }}>—</span>}</td>
+                    <td><Link to={`/student/lms/courses/${s.id}`} style={{ fontSize: 12, color: 'var(--accent)', textDecoration: 'none', fontWeight: 500 }}>Open</Link></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
