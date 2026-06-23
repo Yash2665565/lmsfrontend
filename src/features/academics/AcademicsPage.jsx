@@ -69,7 +69,7 @@ function ModalShell({ title, onClose, children }) {
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background: 'rgba(15,23,42,0.45)' }}
+      style={{ background: 'rgba(33,30,24,0.42)' }}
       onClick={e => e.target === e.currentTarget && onClose()}
     >
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
@@ -178,7 +178,7 @@ function AcademicYearsTab() {
             <Field label="Name" error={errors.name?.message}>
               <input className="input" {...register('name', { required: 'Name is required' })} placeholder="e.g. 2025-26" />
             </Field>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Field label="Start Date" error={errors.startDate?.message}>
                 <input type="date" className="input" {...register('startDate', { required: 'Required' })} />
               </Field>
@@ -310,7 +310,7 @@ function TermsTab() {
             <Field label="Term Name" error={errors.name?.message}>
               <input className="input" {...register('name', { required: 'Name is required' })} placeholder="e.g. Term 1" />
             </Field>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Field label="Start Date" error={errors.startDate?.message}>
                 <input type="date" className="input" {...register('startDate', { required: 'Required' })} />
               </Field>
@@ -625,7 +625,7 @@ function SubjectsTab() {
       {showAdd && (
         <ModalShell title="Add Subject" onClose={() => { setShowAdd(false); reset() }}>
           <form onSubmit={handleSubmit(d => createMutation.mutate(d))} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Field label="Subject Name" error={errors.name?.message}>
                 <input className="input" {...register('name', { required: 'Name is required' })} placeholder="e.g. Mathematics" />
               </Field>

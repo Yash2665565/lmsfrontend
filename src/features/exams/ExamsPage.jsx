@@ -25,7 +25,7 @@ function ModalShell({ title, onClose, size = 'md', children }) {
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background: 'rgba(15,23,42,0.45)' }}
+      style={{ background: 'rgba(33,30,24,0.42)' }}
       onClick={e => e.target === e.currentTarget && onClose()}
     >
       <div className={`bg-white rounded-2xl shadow-2xl w-full ${sizes[size] ?? sizes.md}`}>
