@@ -1,8 +1,8 @@
 import { useState } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import Sidebar from './Sidebar'
 import { useAuth } from '../../auth/AuthContext'
-import { IconMenu, IconBell } from '../ui/Icons'
+import { IconMenu, IconBell, IconLogout, IconChevronD } from '../ui/Icons'
 
 // Map route segments to human-readable labels
 const ROUTE_LABELS = {
@@ -88,13 +88,24 @@ const mediaCSS = `
       box-shadow: 4px 0 24px rgba(0,0,0,0.18) !important;
     }
   }
+  /* Condense the top header on phones */
+  @media (max-width: 640px) {
+    .layout-header        { padding: 0 14px !important; }
+    .hdr-school-badge     { display: none !important; }
+    .hdr-user-text        { display: none !important; }
+    .hdr-user-pill        { padding: 3px !important; border: none !important; background: transparent !important; }
+  }
 `
 
 export default function Layout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [notifActive, setNotifActive] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
   const location = useLocation()
-  const { user } = useAuth()
+  const navigate = useNavigate()
+  const { user, logout } = useAuth()
+
+  const handleSignOut = () => { setMenuOpen(false); logout(); navigate('/login', { replace: true }) }
 
   const breadcrumbs = buildBreadcrumbs(location.pathname)
   const pageTitle   = getPageTitle(location.pathname)
@@ -151,7 +162,7 @@ export default function Layout({ children }) {
       }}>
 
         {/* Sticky top header */}
-        <header style={{
+        <header className="layout-header" style={{
           flexShrink: 0,
           height: 60,
           background: 'rgba(251, 248, 241, 0.85)',
@@ -240,7 +251,7 @@ export default function Layout({ children }) {
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
 
             {/* School name badge */}
-            <div style={{
+            <div className="hdr-school-badge" style={{
               display: 'flex',
               alignItems: 'center',
               gap: 7,
@@ -320,57 +331,73 @@ export default function Layout({ children }) {
               }} aria-hidden="true" />
             </button>
 
-            {/* User avatar pill */}
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 9,
-              padding: '4px 12px 4px 4px',
-              background: 'var(--surface)',
-              borderRadius: 10,
-              border: '1px solid var(--line)',
-              cursor: 'default',
-              userSelect: 'none',
-            }}>
-              {/* Avatar circle */}
-              <div style={{
-                width: 30,
-                height: 30,
-                borderRadius: 8,
-                background: 'linear-gradient(150deg, #b07a3c 0%, #8a5e2a 100%)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#fbf8f1',
-                fontFamily: "'Fraunces', Georgia, serif",
-                fontWeight: 600,
-                fontSize: 12,
-                letterSpacing: '0.02em',
-                flexShrink: 0,
-              }}>
-                {initials}
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.25 }}>
-                <span style={{
-                  fontSize: 12.5,
+            {/* User menu (avatar → dropdown with Sign out) */}
+            <div style={{ position: 'relative' }}>
+              <button
+                className="hdr-user-pill"
+                onClick={() => setMenuOpen(o => !o)}
+                aria-label="Account menu"
+                aria-expanded={menuOpen}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 9,
+                  padding: '4px 10px 4px 4px',
+                  background: 'var(--surface)',
+                  borderRadius: 10,
+                  border: '1px solid var(--line)',
+                  cursor: 'pointer',
+                  userSelect: 'none',
+                  fontFamily: 'inherit',
+                }}
+              >
+                <div style={{
+                  width: 30,
+                  height: 30,
+                  borderRadius: 8,
+                  background: 'linear-gradient(150deg, #b07a3c 0%, #8a5e2a 100%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#fbf8f1',
+                  fontFamily: "'Fraunces', Georgia, serif",
                   fontWeight: 600,
-                  color: 'var(--ink)',
-                  whiteSpace: 'nowrap',
-                  maxWidth: 110,
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                }}>
-                  {displayName}
-                </span>
-                <span style={{
-                  fontSize: 10.5,
-                  color: 'var(--faint)',
-                  whiteSpace: 'nowrap',
+                  fontSize: 12,
                   letterSpacing: '0.02em',
+                  flexShrink: 0,
                 }}>
-                  {roleLabel}
-                </span>
-              </div>
+                  {initials}
+                </div>
+                <div className="hdr-user-text" style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.25, textAlign: 'left' }}>
+                  <span style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--ink)', whiteSpace: 'nowrap', maxWidth: 110, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {displayName}
+                  </span>
+                  <span style={{ fontSize: 10.5, color: 'var(--faint)', whiteSpace: 'nowrap', letterSpacing: '0.02em' }}>
+                    {roleLabel}
+                  </span>
+                </div>
+                <IconChevronD size={13} color="var(--faint)" />
+              </button>
+
+              {menuOpen && (
+                <>
+                  <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={() => setMenuOpen(false)} />
+                  <div style={{ position: 'absolute', right: 0, top: 'calc(100% + 8px)', zIndex: 50, background: '#fff', border: '1px solid var(--line)', borderRadius: 11, boxShadow: 'var(--shadow-lg)', minWidth: 210, padding: 6 }}>
+                    <div style={{ padding: '8px 10px 10px', borderBottom: '1px solid var(--line-2)', marginBottom: 4 }}>
+                      <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{displayName}</p>
+                      <p style={{ fontSize: 11.5, color: 'var(--faint)', margin: '2px 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user?.email || roleLabel}</p>
+                    </div>
+                    <button
+                      onClick={handleSignOut}
+                      style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', borderRadius: 7, border: 'none', background: 'none', cursor: 'pointer', fontSize: 13, color: 'var(--danger)', fontWeight: 500, fontFamily: 'inherit' }}
+                      onMouseEnter={e => e.currentTarget.style.background = 'var(--danger-tint)'}
+                      onMouseLeave={e => e.currentTarget.style.background = 'none'}
+                    >
+                      <IconLogout size={14} /> Sign out
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </header>

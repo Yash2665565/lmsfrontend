@@ -4,6 +4,7 @@ import {
   IconDashboard, IconUsers, IconUser, IconGradCap, IconBook, IconCalendar,
   IconClipboard, IconChart, IconNotice, IconBuilding, IconEdit, IconLogout,
   IconBookOpen, IconFileText, IconUserPlus, IconHome, IconLayers,
+  IconBus, IconWallet, IconBox,
 } from '../ui/Icons'
 
 /* ─── Pine-green sidebar tokens ──────────────────────────────────────────── */
@@ -262,6 +263,11 @@ export default function Sidebar({ isOpen, onClose }) {
                 <NavItem to="/admin/attendance"         Icon={IconClipboard} label="Mark Attendance" />
                 <NavItem to="/admin/reports/attendance" Icon={IconChart}     label="Reports" />
               </Section>
+              <Section title="Operations">
+                <NavItem to="/admin/fees"      Icon={IconWallet} label="Fees" />
+                <NavItem to="/admin/transport" Icon={IconBus}    label="Transport" />
+                <NavItem to="/admin/inventory" Icon={IconBox}    label="Inventory" />
+              </Section>
               <Section title="Communication">
                 <NavItem to="/admin/notices" Icon={IconNotice} label="Notices" />
               </Section>
@@ -304,6 +310,8 @@ export default function Sidebar({ isOpen, onClose }) {
                 <NavItem to="/student/timetable"  Icon={IconCalendar}  label="Timetable" />
                 <NavItem to="/student/attendance" Icon={IconClipboard} label="My Attendance" />
                 <NavItem to="/student/marks"      Icon={IconChart}     label="My Marks" />
+                <NavItem to="/student/transport"  Icon={IconBus}       label="My Bus" />
+                <NavItem to="/student/fees"        Icon={IconWallet}   label="My Fees" />
               </Section>
               <Section title="Communication">
                 <NavItem to="/student/notices" Icon={IconNotice} label="Notices" />
