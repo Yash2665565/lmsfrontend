@@ -3,11 +3,40 @@ import { useNavigate } from 'react-router-dom'
 
 const AuthContext = createContext(null)
 
+// Decode the JWT payload and return its `exp` (seconds), or null if unreadable.
+function tokenExp(token) {
+  try {
+    const payload = token.split('.')[1]
+    const json = atob(payload.replace(/-/g, '+').replace(/_/g, '/'))
+    return JSON.parse(json).exp ?? null
+  } catch { return null }
+}
+
+// A stored session is only valid if the token exists AND has not expired.
+function isSessionValid(token) {
+  const exp = token ? tokenExp(token) : null
+  return exp != null && exp * 1000 > Date.now()
+}
+
+function clearStoredSession() {
+  localStorage.removeItem('token')
+  localStorage.removeItem('user')
+}
+
 export function AuthProvider({ children }) {
+  // On load, trust the saved session only if the token is present and unexpired.
+  // An expired/garbage token is cleared here so the login form is shown instead
+  // of silently entering a dead session.
+  const [token, setToken] = useState(() => {
+    const t = localStorage.getItem('token')
+    if (isSessionValid(t)) return t
+    clearStoredSession()
+    return null
+  })
   const [user, setUser] = useState(() => {
+    if (!localStorage.getItem('token')) return null
     try { return JSON.parse(localStorage.getItem('user')) } catch { return null }
   })
-  const [token, setToken] = useState(() => localStorage.getItem('token'))
   const navigate = useNavigate()
 
   const login = (tokenStr, userData) => {
@@ -18,8 +47,7 @@ export function AuthProvider({ children }) {
   }
 
   const logout = () => {
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
+    clearStoredSession()
     setToken(null)
     setUser(null)
   }
@@ -31,6 +59,17 @@ export function AuthProvider({ children }) {
     window.addEventListener('auth:logout', handle)
     return () => window.removeEventListener('auth:logout', handle)
   }, [])
+
+  // Auto sign-out the moment the token expires while the app is open.
+  useEffect(() => {
+    if (!token) return
+    const exp = tokenExp(token)
+    if (exp == null) return
+    const msLeft = exp * 1000 - Date.now()
+    if (msLeft <= 0) { logout(); navigate('/login', { replace: true }); return }
+    const timer = setTimeout(() => { logout(); navigate('/login', { replace: true }) }, msLeft)
+    return () => clearTimeout(timer)
+  }, [token])
 
   const hasRole = (role) =>
     user?.roles?.some(r => r.toUpperCase().includes(role.toUpperCase()))

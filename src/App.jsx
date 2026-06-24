@@ -20,6 +20,11 @@ import MarksEntryPage from './features/marks/MarksEntryPage'
 import NoticesPage from './features/notices/NoticesPage'
 import TimetablePage from './features/timetable/TimetablePage'
 import LessonsPage from './features/content/LessonsPage'
+import TransportPage from './features/transport/TransportPage'
+import StudentTransportPage from './features/transport/StudentTransportPage'
+import FeesPage from './features/fees/FeesPage'
+import StudentFeesPage from './features/fees/StudentFeesPage'
+import InventoryPage from './features/inventory/InventoryPage'
 import LmsDashboard from './lms/LmsDashboard'
 import LmsCoursesPage from './lms/LmsCoursesPage'
 import LmsCourseDetail from './lms/LmsCourseDetail'
@@ -47,6 +52,9 @@ export default function App() {
       <Route path="/admin/reports/attendance" element={<ProtectedRoute roles={ADMIN_TEACHER}><Layout><AttendanceReport /></Layout></ProtectedRoute>} />
       <Route path="/admin/notices" element={<ProtectedRoute roles={ADMIN}><Layout><NoticesPage /></Layout></ProtectedRoute>} />
       <Route path="/admin/timetable" element={<ProtectedRoute roles={ADMIN}><Layout><TimetablePage /></Layout></ProtectedRoute>} />
+      <Route path="/admin/transport" element={<ProtectedRoute roles={ADMIN}><Layout><TransportPage /></Layout></ProtectedRoute>} />
+      <Route path="/admin/fees" element={<ProtectedRoute roles={ADMIN}><Layout><FeesPage /></Layout></ProtectedRoute>} />
+      <Route path="/admin/inventory" element={<ProtectedRoute roles={ADMIN}><Layout><InventoryPage /></Layout></ProtectedRoute>} />
 
       {/* Teacher routes */}
       <Route path="/teacher" element={<ProtectedRoute roles={TEACHER}><Layout><TeacherDashboard /></Layout></ProtectedRoute>} />
@@ -61,6 +69,8 @@ export default function App() {
       <Route path="/student/timetable" element={<ProtectedRoute roles={['STUDENT']}><Layout><TimetablePage /></Layout></ProtectedRoute>} />
       <Route path="/student/attendance" element={<ProtectedRoute roles={['STUDENT']}><Layout><AttendanceReport /></Layout></ProtectedRoute>} />
       <Route path="/student/marks" element={<ProtectedRoute roles={['STUDENT']}><Layout><ReportCardPage /></Layout></ProtectedRoute>} />
+      <Route path="/student/transport" element={<ProtectedRoute roles={['STUDENT']}><Layout><StudentTransportPage /></Layout></ProtectedRoute>} />
+      <Route path="/student/fees" element={<ProtectedRoute roles={['STUDENT']}><Layout><StudentFeesPage /></Layout></ProtectedRoute>} />
       <Route path="/student/lessons" element={<ProtectedRoute roles={['STUDENT']}><Layout><LessonsPage /></Layout></ProtectedRoute>} />
       <Route path="/student/notices" element={<ProtectedRoute roles={['STUDENT']}><Layout><NoticesPage /></Layout></ProtectedRoute>} />
       {/* LMS routes — use LmsLayout (top navbar, no sidebar) */}

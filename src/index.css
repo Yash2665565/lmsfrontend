@@ -309,7 +309,8 @@
     background: var(--surface);
     border: 1px solid var(--line);
     border-radius: var(--radius-lg);
-    overflow: hidden;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
     box-shadow: var(--shadow-xs);
   }
   .data-table { width: 100%; border-collapse: collapse; }
@@ -385,6 +386,19 @@
     background: #eaf0ec; color: var(--accent);
     display: flex; align-items: center; justify-content: center; flex-shrink: 0;
   }
+}
+
+/* ── Responsive: phone refinements ── */
+@media (max-width: 640px) {
+  .page { padding: 16px 14px; }
+  .card { padding: 16px; border-radius: 11px; }
+  .card-header { padding: 14px 16px; }
+  .card-body { padding: 16px; }
+  .form-row { grid-template-columns: 1fr; }
+  .data-table th { padding: 10px 13px; }
+  .data-table td { padding: 11px 13px; font-size: 13px; }
+  .stat-value { font-size: 28px; }
+  .display { font-size: 26px !important; }
 }
 
 /* ── Scrollbars (warm) ── */

@@ -59,3 +59,8 @@ export const IconInfo      = i(<><circle cx="12" cy="12" r="10"/><line x1="12" y
 export const IconAlert     = i(<><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>)
 export const IconGrid      = i(<><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></>)
 export const IconCopy      = i(<><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></>)
+export const IconMapPin    = i(<><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></>)
+export const IconBus       = i(<><path d="M8 6v6M16 6v6M2 12h19.6M18 18h3a1 1 0 001-1v-5a8 8 0 00-8-8H8a8 8 0 00-8 8v5a1 1 0 001 1h2"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></>)
+export const IconWallet    = i(<><path d="M21 12V7H5a2 2 0 010-4h14v4"/><path d="M3 5v14a2 2 0 002 2h16v-5"/><path d="M18 12a2 2 0 000 4h4v-4z"/></>)
+export const IconBox       = i(<><path d="M21 8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><path d="M3.27 6.96L12 12.01l8.73-5.05M12 22.08V12"/></>)
+export const IconShield    = i(<><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></>)

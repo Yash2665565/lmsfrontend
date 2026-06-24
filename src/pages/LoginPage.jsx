@@ -62,19 +62,11 @@ function SpinnerIcon() {
 }
 
 export default function LoginPage() {
-  const { login, user } = useAuth()
+  const { login, logout, user } = useAuth()
   const navigate = useNavigate()
   const [params] = useSearchParams()
   const role = params.get('role') ?? 'student'
   const meta = ROLES[role] ?? ROLES.student
-
-  if (user) {
-    const roles = (user.roles || []).map(r => r.toUpperCase())
-    if (roles.some(r => r.includes('ADMIN')))   return <Navigate to="/admin"   replace />
-    if (roles.some(r => r.includes('TEACHER'))) return <Navigate to="/teacher" replace />
-    if (roles.some(r => r.includes('STUDENT'))) return <Navigate to="/student" replace />
-    if (roles.some(r => r.includes('PARENT')))  return <Navigate to="/parent"  replace />
-  }
 
   const { register, handleSubmit, formState: { errors } } = useForm({ resolver: zodResolver(schema) })
 
@@ -108,6 +100,23 @@ export default function LoginPage() {
       else navigate('/')
     },
   })
+
+  // If already signed in, we still show the login form (so you can sign in as a
+  // different role) plus a banner with the current account + sign-out / dashboard.
+  const signedIn = user ? (() => {
+    const roles = (user.roles || []).map(r => r.toUpperCase())
+    const dest =
+      roles.some(r => r.includes('ADMIN'))   ? '/admin'   :
+      roles.some(r => r.includes('TEACHER')) ? '/teacher' :
+      roles.some(r => r.includes('STUDENT')) ? '/student' :
+      roles.some(r => r.includes('PARENT'))  ? '/parent'  : '/'
+    const roleLabel =
+      roles.some(r => r.includes('ADMIN'))   ? 'Administrator' :
+      roles.some(r => r.includes('TEACHER')) ? 'Teacher' :
+      roles.some(r => r.includes('STUDENT')) ? 'Student' :
+      roles.some(r => r.includes('PARENT'))  ? 'Parent' : 'User'
+    return { dest, roleLabel, name: user.name || user.email }
+  })() : null
 
   const accentHex = meta.color
   const accentBg  = accentHex + '16'
@@ -273,6 +282,17 @@ export default function LoginPage() {
               </svg>
               Back to portal
             </Link>
+
+            {signedIn && (
+              <div style={{ background: '#fff', border: '1px solid #e3dac9', borderRadius: 10, padding: '11px 13px', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ margin: 0, fontSize: 12.5, color: '#211e18', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Signed in as {signedIn.name}</p>
+                  <p style={{ margin: '1px 0 0', fontSize: 11.5, color: '#726b5c' }}>{signedIn.roleLabel} · sign in below to switch</p>
+                </div>
+                <button type="button" onClick={() => navigate(signedIn.dest)} className="btn btn-secondary btn-sm">Dashboard</button>
+                <button type="button" onClick={() => logout()} className="btn btn-secondary btn-sm">Sign out</button>
+              </div>
+            )}
 
             <div className="lp-card">
               <div className="lp-role-badge" style={{ background: accentBg, border: `1px solid ${accentBrd}`, color: accentHex }}>

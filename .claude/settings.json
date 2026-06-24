@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "additionalDirectories": [
+      "/home/utg/lmsbackend/app/src/main/java/com/school/inventory/controller"
+    ]
+  }
+}
