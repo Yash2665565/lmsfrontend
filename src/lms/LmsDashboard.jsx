@@ -56,8 +56,8 @@ export default function LmsDashboard() {
   const { user } = useAuth()
 
   const { data: subjects = [], isLoading } = useQuery({
-    queryKey: ['lms-subjects'],
-    queryFn: () => api.get('/subjects').then(r => r.data.data ?? []),
+    queryKey: ['lms-courses', 'dashboard'],
+    queryFn: () => lmsApi.getCourses(),
   })
   const { data: stats } = useQuery({
     queryKey: ['lms-stats', user?.studentId],

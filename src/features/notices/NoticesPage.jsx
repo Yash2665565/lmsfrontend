@@ -77,6 +77,16 @@ function PostNoticeForm({ onSubmit, isPending }) {
           placeholder="e.g. Holiday announcement"
           {...register('name', { required: 'Title is required' })}
         />
+      
+      </Field>
+      <Field label="Document " >
+        <input
+          className="input"
+          type="file"
+          
+          {...register('name', { required: 'Title is required' })}
+        />
+      
       </Field>
       <Field label="Content *" error={errors.content?.message}>
         <textarea

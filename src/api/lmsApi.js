@@ -1,6 +1,11 @@
 import api from '../app/axios'
 
 export const lmsApi = {
+  // Courses (scoped subjects) — student: own class; teacher/admin: by section
+  getCourses:      (sectionId)          => api.get('/lms/courses', { params: sectionId ? { sectionId } : {} }).then(r => r.data.data ?? []),
+  // Classes & sections the current teacher is allocated to (for the teacher's filter)
+  getMySections:   ()                   => api.get('/lms/my-sections').then(r => r.data.data ?? []),
+
   // Units
   getUnits:        (subjectId)          => api.get(`/subjects/${subjectId}/units`).then(r => r.data.data ?? []),
   createUnit:      (subjectId, body)    => api.post(`/subjects/${subjectId}/units`, body).then(r => r.data.data),

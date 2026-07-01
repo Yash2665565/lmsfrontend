@@ -256,8 +256,10 @@ export default function Sidebar({ isOpen, onClose }) {
               </Section>
               <Section title="Academics">
                 <NavItem to="/admin/academics" Icon={IconBuilding} label="Classes & Subjects" />
+                <NavItem to="/admin/subject-teachers" Icon={IconGradCap} label="Subject Teachers" />
                 <NavItem to="/admin/timetable" Icon={IconCalendar} label="Timetable" />
                 <NavItem to="/admin/exams"     Icon={IconFileText} label="Exams & Marks" />
+                <NavItem to="/admin/diary"     Icon={IconBook} label="Diary" />
               </Section>
               <Section title="Attendance">
                 <NavItem to="/admin/attendance"         Icon={IconClipboard} label="Mark Attendance" />
@@ -286,6 +288,7 @@ export default function Sidebar({ isOpen, onClose }) {
               <Section title="Teaching">
                 <NavItem to="/teacher/attendance" Icon={IconClipboard} label="Mark Attendance" />
                 <NavItem to="/teacher/marks"      Icon={IconEdit}      label="Enter Marks" />
+                <NavItem to="/teacher/diary"      Icon={IconBook}      label="Class Diary" />
                 <NavItem to="/teacher/timetable"  Icon={IconCalendar}  label="My Timetable" />
               </Section>
               <Section title="Reports">
@@ -310,6 +313,8 @@ export default function Sidebar({ isOpen, onClose }) {
                 <NavItem to="/student/timetable"  Icon={IconCalendar}  label="Timetable" />
                 <NavItem to="/student/attendance" Icon={IconClipboard} label="My Attendance" />
                 <NavItem to="/student/marks"      Icon={IconChart}     label="My Marks" />
+                <NavItem to="/student/exams"      Icon={IconFileText}  label="My Exams" />
+                <NavItem to="/student/diary"      Icon={IconBook}      label="Class Diary" />
                 <NavItem to="/student/transport"  Icon={IconBus}       label="My Bus" />
                 <NavItem to="/student/fees"        Icon={IconWallet}   label="My Fees" />
               </Section>
