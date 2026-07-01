@@ -199,15 +199,10 @@ function AddExamModal({ termId, onClose, onSuccess }) {
 // ── Add Subject Modal ──────────────────────────────────────────────────────────
 
 function AddSubjectModal({ examId, onClose, onSuccess }) {
-  const { register, handleSubmit, formState: { errors } } = useForm({
-    defaultValues: { subjectId: '', classGradeId: '', maxMarks: 100 },
+  const { register, handleSubmit, watch, formState: { errors } } = useForm({
+    defaultValues: { subjectId: '', classGradeId: '', maxMarks: 100, examDate: '', startTime: '' },
   })
-
-  const { data: subjectsData } = useQuery({
-    queryKey: ['subjects'],
-    queryFn: () => api.get('/subjects').then(r => r.data.data),
-  })
-  const subjects = toList(subjectsData)
+  const classGradeId = watch('classGradeId')
 
   const { data: classesData } = useQuery({
     queryKey: ['classes'],
@@ -215,36 +210,64 @@ function AddSubjectModal({ examId, onClose, onSuccess }) {
   })
   const classes = toList(classesData)
 
+  // Subjects mapped to the chosen class only (class_subjects)
+  const { data: classSubjData } = useQuery({
+    queryKey: ['class-exam-subjects', classGradeId],
+    queryFn: () => api.get(`/classes/${classGradeId}/exam-subjects`).then(r => r.data.data),
+    enabled: !!classGradeId,
+  })
+  const classSubjects = toList(classSubjData)
+
   const mutation = useMutation({
     mutationFn: body => api.post(`/exams/${examId}/subjects`, body),
     onSuccess: () => onSuccess(),
   })
 
   return (
-    <ModalShell title="Add Subject to Exam" onClose={onClose}>
-      <form onSubmit={handleSubmit(d => mutation.mutate({ ...d, maxMarks: Number(d.maxMarks) }))} className="space-y-4">
-        <Field label="Subject" error={errors.subjectId?.message}>
-          <select className="input" {...register('subjectId', { required: 'Required' })}>
-            <option value="">Select subject…</option>
-            {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-          </select>
-        </Field>
+    <ModalShell title="Add Paper to Datesheet" onClose={onClose}>
+      <form
+        onSubmit={handleSubmit(d => mutation.mutate({
+          classGradeId: Number(d.classGradeId),
+          subjectId: Number(d.subjectId),
+          maxMarks: Number(d.maxMarks),
+          examDate: d.examDate || null,
+          startTime: d.startTime || null,
+        }))}
+        className="space-y-4"
+      >
         <Field label="Class" error={errors.classGradeId?.message}>
           <select className="input" {...register('classGradeId', { required: 'Required' })}>
             <option value="">Select class…</option>
             {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
         </Field>
+        <Field label="Subject" error={errors.subjectId?.message}>
+          <select className="input" disabled={!classGradeId} {...register('subjectId', { required: 'Required' })}>
+            <option value="">{classGradeId ? 'Select subject…' : 'Select a class first'}</option>
+            {classSubjects.map(s => <option key={s.subjectId} value={s.subjectId}>{s.subjectName}</option>)}
+          </select>
+          {classGradeId && classSubjects.length === 0 && (
+            <p className="text-xs text-amber-600 mt-1">No subjects are mapped to this class yet.</p>
+          )}
+        </Field>
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Exam Date" error={errors.examDate?.message}>
+            <input type="date" className="input" {...register('examDate', { required: 'Required' })} />
+          </Field>
+          <Field label="Start Time">
+            <input type="time" className="input" {...register('startTime')} />
+          </Field>
+        </div>
         <Field label="Maximum Marks" error={errors.maxMarks?.message}>
           <input type="number" className="input" min={1} {...register('maxMarks', { required: 'Required', min: 1 })} />
         </Field>
         {mutation.isError && (
-          <p className="text-xs text-red-600">{mutation.error?.response?.data?.message ?? 'Failed to add subject.'}</p>
+          <p className="text-xs text-red-600">{mutation.error?.response?.data?.message ?? 'Failed to add paper.'}</p>
         )}
         <div className="flex justify-end gap-3 pt-1">
           <button type="button" className="btn-secondary" onClick={onClose}>Cancel</button>
           <button type="submit" className="btn-primary" disabled={mutation.isPending}>
-            {mutation.isPending ? 'Adding…' : 'Add Subject'}
+            {mutation.isPending ? 'Adding…' : 'Add to Datesheet'}
           </button>
         </div>
       </form>
@@ -412,7 +435,7 @@ export default function ExamsPage() {
                 </div>
                 {!selectedExamSubject && (
                   <button className="btn-primary text-sm" onClick={() => setShowAddSubject(true)}>
-                    + Add Subject
+                    + Add Paper
                   </button>
                 )}
               </div>
@@ -457,6 +480,11 @@ export default function ExamsPage() {
                               /{sub.maxMarks}
                             </span>
                           </div>
+                          {(sub.examDate || sub.startTime) && (
+                            <p className="text-xs text-slate-600 mb-3">
+                              {sub.examDate || ''}{sub.startTime ? ` · ${sub.startTime}` : ''}
+                            </p>
+                          )}
                           <button
                             className="btn-secondary w-full text-xs py-1.5"
                             onClick={() => setSelectedExamSubject({

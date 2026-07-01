@@ -2,8 +2,173 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import api from '../../app/axios'
+import { allocationApi, teacherLabel } from '../../api/allocationApi'
+import Modal from '../../components/ui/Modal'
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
+
+// Per-section panel: add subjects to the class + assign a teacher to each subject.
+function SectionSubjectsModal({ section, classGradeId, onClose }) {
+  const qc = useQueryClient()
+  const open = Boolean(section)
+  const sectionId = section?.id
+  const [adding, setAdding] = useState('')
+  const inv = () => { qc.invalidateQueries({ queryKey: ['section-subjects', String(sectionId)] }) }
+
+  const { data: rows = [], isLoading } = useQuery({
+    queryKey: ['section-subjects', String(sectionId)],
+    queryFn: () => allocationApi.getSectionSubjects(sectionId),
+    enabled: open,
+  })
+  const { data: allSubjects = [] } = useQuery({ queryKey: ['all-subjects'], queryFn: allocationApi.getSubjects, enabled: open })
+  const { data: allTeachers = [] } = useQuery({ queryKey: ['all-teachers'], queryFn: allocationApi.getTeachers, enabled: open })
+
+  const assignedIds = new Set(rows.map(r => r.topicId))
+  const available = allSubjects.filter(s => !assignedIds.has(s.id))
+
+  const addSub = useMutation({ mutationFn: (sid) => allocationApi.addClassSubject(classGradeId, sid), onSuccess: () => { inv(); setAdding('') } })
+  const removeSub = useMutation({ mutationFn: (sid) => allocationApi.removeClassSubject(classGradeId, sid), onSuccess: inv })
+  const assignTeacher = useMutation({ mutationFn: (b) => allocationApi.assign(b), onSuccess: inv })
+
+  return (
+    <Modal open={open} onClose={onClose} title={section ? `Subjects — ${section.classGrade?.name ?? 'Class'} ${section.name}` : ''} size="lg">
+      {/* Add subject to the class */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+        <select className="input" value={adding} onChange={e => setAdding(e.target.value)}>
+          <option value="">— Add a subject to this class —</option>
+          {available.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+        </select>
+        <button className="btn btn-primary btn-sm" disabled={!adding || addSub.isPending} onClick={() => addSub.mutate(Number(adding))}>Add</button>
+      </div>
+      <p style={{ fontSize: 11.5, color: 'var(--faint)', margin: '0 0 12px' }}>Subjects apply to the whole class ({section?.classGrade?.name}); teacher assignment is per this section.</p>
+
+      {isLoading ? <p style={{ color: 'var(--faint)' }}>Loading…</p> : rows.length === 0 ? (
+        <p style={{ color: 'var(--faint)', textAlign: 'center', padding: '20px 0' }}>No subjects yet. Add one above.</p>
+      ) : (
+        <table className="data-table" style={{ border: '1px solid var(--line)', borderRadius: 8 }}>
+          <thead><tr><th>Subject</th><th style={{ width: 300 }}>Teacher</th><th></th></tr></thead>
+          <tbody>
+            {rows.map(r => (
+              <SubjRow key={r.topicId} row={r} sectionId={sectionId} allTeachers={allTeachers}
+                onAssign={(teacherId) => assignTeacher.mutate({ sectionId: Number(sectionId), topicId: r.topicId, teacherId })}
+                onRemove={() => removeSub.mutate(r.topicId)} busy={assignTeacher.isPending} />
+            ))}
+          </tbody>
+        </table>
+      )}
+    </Modal>
+  )
+}
+
+function SubjRow({ row, sectionId, allTeachers, onAssign, onRemove, busy }) {
+  const [sel, setSel] = useState(row.teacherId ? String(row.teacherId) : '')
+  const { data: eligible = [] } = useQuery({
+    queryKey: ['subject-teachers-for', row.topicId],
+    queryFn: () => allocationApi.teachersForSubject(row.topicId),
+  })
+  const opts = eligible.length ? eligible.map(t => ({ id: t.teacherId, name: t.teacherName })) : allTeachers.map(t => ({ id: t.id, name: teacherLabel(t) }))
+  return (
+    <tr>
+      <td style={{ fontWeight: 600 }}>{row.subjectName}<div style={{ fontSize: 11, color: 'var(--faint)' }}>{row.teacherName ? `Assigned: ${row.teacherName}` : 'Not assigned'}</div></td>
+      <td>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <select className="input" value={sel} onChange={e => setSel(e.target.value)}>
+            <option value="">— Select teacher —</option>
+            {opts.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
+          </select>
+          <button className="btn btn-primary btn-sm" disabled={!sel || busy} onClick={() => onAssign(Number(sel))}>Save</button>
+        </div>
+      </td>
+      <td style={{ textAlign: 'right' }}>
+        <button className="btn btn-ghost btn-sm" style={{ color: 'var(--danger)' }} onClick={onRemove}>Remove</button>
+      </td>
+    </tr>
+  )
+}
+
+// Students in a section: roster → full details + credentials (set/reveal).
+function StudentDetailView({ studentId, onBack }) {
+  const { data: s, isLoading } = useQuery({
+    queryKey: ['student-detail', studentId],
+    queryFn: () => api.get(`/students/${studentId}`).then(r => r.data.data),
+    enabled: !!studentId,
+  })
+  const { register, handleSubmit } = useForm()
+  const [cred, setCred] = useState(null)
+  const save = useMutation({
+    mutationFn: (b) => api.put(`/students/${studentId}/credentials`, b).then(r => r.data),
+    onSuccess: (_d, vars) => setCred(vars),
+  })
+  if (isLoading || !s) return <p style={{ color: 'var(--faint)', padding: '16px 0' }}>Loading…</p>
+  const rows = [
+    ['Name', `${s.firstName ?? ''} ${s.lastName ?? ''}`.trim()], ['Admission No', s.admissionNo],
+    ['Gender', s.gender], ['Date of Birth', s.dob], ['Phone', s.phone], ['Address', s.address],
+    ['Guardian', s.guardianName], ['Login Email', s.email || '—'],
+  ]
+  return (
+    <div>
+      <button className="btn btn-ghost btn-sm" onClick={onBack} style={{ marginBottom: 10 }}>← Back to list</button>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 16px', marginBottom: 16 }}>
+        {rows.map(([k, v]) => (
+          <div key={k}><p style={{ fontSize: 11, color: 'var(--faint)', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>{k}</p>
+            <p style={{ fontSize: 13.5, color: 'var(--ink)', margin: '2px 0 0', fontWeight: 500 }}>{v || '—'}</p></div>
+        ))}
+      </div>
+      <div style={{ borderTop: '1px solid var(--line)', paddingTop: 14 }}>
+        <p className="section-title" style={{ marginBottom: 8 }}>Login Credentials</p>
+        <p style={{ fontSize: 11.5, color: 'var(--faint)', margin: '0 0 8px' }}>Passwords are stored encrypted and can't be shown — set or reset one here to reveal it.</p>
+        <form onSubmit={handleSubmit(d => save.mutate(d))} style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+          <div style={{ flex: 1, minWidth: 180 }}><label className="label">Email</label><input className="input" defaultValue={s.email || ''} {...register('email', { required: true })} /></div>
+          <div style={{ flex: 1, minWidth: 150 }}><label className="label">Password</label><input className="input" placeholder="e.g. School@123" {...register('password', { required: true })} /></div>
+          <button className="btn btn-primary" disabled={save.isPending}>{save.isPending ? 'Saving…' : 'Save & Reveal'}</button>
+        </form>
+        {cred && (
+          <div style={{ marginTop: 12, background: 'var(--success-tint)', border: '1px solid var(--success-line)', borderRadius: 8, padding: '10px 12px' }}>
+            <p style={{ margin: 0, fontSize: 11.5, color: 'var(--muted)' }}>Share these with the student</p>
+            <p style={{ margin: '4px 0 0', fontFamily: 'monospace', color: 'var(--ink)' }}>Email: <b>{cred.email}</b></p>
+            <p style={{ margin: '2px 0 0', fontFamily: 'monospace', color: 'var(--ink)' }}>Password: <b>{cred.password}</b></p>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function SectionStudentsModal({ section, onClose }) {
+  const open = Boolean(section)
+  const sectionId = section?.id
+  const [detailId, setDetailId] = useState(null)
+  const { data: roster = [], isLoading } = useQuery({
+    queryKey: ['section-roster', sectionId],
+    queryFn: () => api.get(`/sections/${sectionId}/enrollments`, { params: { academicYearId: 1 } }).then(r => r.data.data ?? []),
+    enabled: open,
+  })
+  return (
+    <Modal open={open} onClose={() => { setDetailId(null); onClose() }}
+      title={section ? `Students — ${section.classGrade?.name ?? 'Class'} ${section.name}` : ''} size="lg">
+      {detailId ? (
+        <StudentDetailView studentId={detailId} onBack={() => setDetailId(null)} />
+      ) : isLoading ? <p style={{ color: 'var(--faint)', padding: '16px 0' }}>Loading…</p>
+        : roster.length === 0 ? <p style={{ color: 'var(--faint)', textAlign: 'center', padding: '24px 0' }}>No students enrolled in this section.</p>
+        : (
+          <table className="data-table" style={{ border: '1px solid var(--line)', borderRadius: 8 }}>
+            <thead><tr><th style={{ width: 60 }}>Roll</th><th>Name</th><th>Adm. No</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+              {roster.map(r => (
+                <tr key={r.studentId}>
+                  <td>{r.rollNo ?? '—'}</td>
+                  <td style={{ fontWeight: 600 }}>{r.studentName}</td>
+                  <td style={{ color: 'var(--muted)' }}>{r.admissionNo ?? '—'}</td>
+                  <td><span className="badge badge-green">{r.status ?? 'ACTIVE'}</span></td>
+                  <td style={{ textAlign: 'right' }}><button className="btn btn-secondary btn-sm" onClick={() => setDetailId(r.studentId)}>Details &amp; Login</button></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+    </Modal>
+  )
+}
 
 function Field({ label, error, children }) {
   return (
@@ -434,6 +599,8 @@ function SectionsTab() {
   const [selectedClassId, setSelectedClassId] = useState('')
   const [showAdd, setShowAdd] = useState(false)
   const [deleteId, setDeleteId] = useState(null)
+  const [subjTarget, setSubjTarget] = useState(null)
+  const [studentsTarget, setStudentsTarget] = useState(null)
 
   const { data: classesData } = useQuery({
     queryKey: ['classes'],
@@ -511,6 +678,8 @@ function SectionsTab() {
                         {teacher ? `${teacher.firstName} ${teacher.lastName}` : '—'}
                       </td>
                       <td className="px-4 py-3 text-right">
+                        <button className="text-xs text-indigo-600 hover:text-indigo-700 font-medium px-2 py-1 rounded hover:bg-indigo-50 mr-1" onClick={() => setStudentsTarget(s)}>Students</button>
+                        <button className="text-xs text-indigo-600 hover:text-indigo-700 font-medium px-2 py-1 rounded hover:bg-indigo-50 mr-1" onClick={() => setSubjTarget(s)}>Subjects</button>
                         <button className="text-xs text-red-500 hover:text-red-600 font-medium px-2 py-1 rounded hover:bg-red-50" onClick={() => setDeleteId(s.id)}>Delete</button>
                       </td>
                     </tr>
@@ -561,6 +730,9 @@ function SectionsTab() {
           loading={deleteMutation.isPending}
         />
       )}
+
+      <SectionSubjectsModal section={subjTarget} classGradeId={Number(selectedClassId)} onClose={() => setSubjTarget(null)} />
+      <SectionStudentsModal section={studentsTarget} onClose={() => setStudentsTarget(null)} />
     </div>
   )
 }
